@@ -241,7 +241,7 @@ fn bind_afterward(socket: &tokio::net::UdpSocket, address: &SocketAddr) -> Resul
   let socket_fd = socket.as_raw_fd();
   let mut addr: libc::sockaddr_in6 = unsafe { std::mem::zeroed() };
   addr.sin6_family = libc::AF_INET6 as u16;
-  addr.sin6_port = address.port.to_be();
+  addr.sin6_port = address.port().to_be();
   addr.sin6_flowinfo = 0;
   addr.sin6_addr = libc::in6_addr {
     s6_addr: addr_bytes,
