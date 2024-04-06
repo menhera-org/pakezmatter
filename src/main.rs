@@ -234,7 +234,7 @@ async fn main() -> Result<(), anyhow::Error> {
   {
     if let Some(interface) = &config.bind_interface {
       let interface = interface.as_bytes();
-      socket.bind_interface(Some(interface));
+      socket.bind_device(Some(interface));
     }
   }
 
