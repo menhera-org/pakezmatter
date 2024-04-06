@@ -252,7 +252,7 @@ async fn main() -> Result<(), anyhow::Error> {
       } else {
         continue;
       };
-      let packet = Packet::parse(&config_send.shared_secret, &buf[..len]);
+      let packet = Packet::parse(&config.shared_secret, &buf[..len]);
 
       match packet {
         Ok(packet) => {
@@ -299,8 +299,10 @@ async fn main() -> Result<(), anyhow::Error> {
         let mut buf = Vec::new();
         buf.push(0);
         buf.extend_from_slice(&timestamp.to_be_bytes());
-        let payload = buf.as_slice();
-        let _ = socket_send.send_to(payload, addr).await;
+        let signature = Packet::generate_signature(&config_send.shared_secret, &buf);
+        let packet = Packet::new(&signature, &buf);
+        let payload = packet.as_bytes();
+        let _ = socket_send.send_to(&payload, addr).await;
       }
     }
   });
