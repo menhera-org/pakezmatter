@@ -1,10 +1,12 @@
 
 use std::collections::HashMap;
 use std::net::SocketAddr;
+use std::net::SocketAddrV6;
 
 use std::sync::Arc;
 
 use std::io::Cursor;
+use std::os::fd::AsRawFd;
 
 use byteorder::{BigEndian, ReadBytesExt};
 use parking_lot::RwLock;
@@ -222,13 +224,70 @@ impl TryFrom<&[u8]> for Command {
   }
 }
 
+fn socket_addr_to_v6(addr: &SocketAddr) -> SocketAddrV6 {
+  match addr {
+    SocketAddr::V4(v4) => {
+      let v6 = v4.ip().to_ipv6_mapped();
+      SocketAddrV6::new(v6, v4.port(), 0, 0)
+    }
+    SocketAddr::V6(v6) => v6.clone(),
+  }
+}
+
+#[cfg(target_os = "linux")]
+fn bind_afterward(socket: &tokio::net::UdpSocket, address: &SocketAddr) -> Result<(), std::io::Error> {
+  let address = socket_addr_to_v6(address);
+  let addr_bytes = address.ip().octets();
+  let socket_fd = socket.as_raw_fd();
+  let mut addr: libc::sockaddr_in6 = unsafe { std::mem::zeroed() };
+  addr.sin6_family = libc::AF_INET6 as u16;
+  addr.sin6_port = address.port.to_be();
+  addr.sin6_flowinfo = 0;
+  addr.sin6_addr = libc::in6_addr {
+    s6_addr: addr_bytes,
+  };
+  addr.sin6_scope_id = 0;
+
+  let addr_len = std::mem::size_of_val(&addr) as u32;
+  unsafe {
+    if libc::bind(socket_fd, &addr as *const libc::sockaddr_in6 as *const libc::sockaddr, addr_len) < 0 {
+      return Err(std::io::Error::last_os_error());
+    }
+    Ok(())
+  }
+}
+
+#[cfg(target_os = "macos")]
+fn bind_afterward(socket: &tokio::net::UdpSocket, address: &SocketAddr) -> Result<(), std::io::Error> {
+  let address = socket_addr_to_v6(address);
+  let addr_bytes = address.ip().octets();
+  let socket_fd = socket.as_raw_fd();
+  let mut addr: libc::sockaddr_in6 = unsafe { std::mem::zeroed() };
+  addr.sin6_family = libc::AF_INET6 as u8;
+  addr.sin6_port = address.port().to_be();
+  addr.sin6_flowinfo = 0;
+  addr.sin6_addr = libc::in6_addr {
+    s6_addr: addr_bytes,
+  };
+  addr.sin6_scope_id = 0;
+
+  let addr_len = std::mem::size_of_val(&addr) as u32;
+  unsafe {
+    if libc::bind(socket_fd, &addr as *const libc::sockaddr_in6 as *const libc::sockaddr, addr_len) < 0 {
+      return Err(std::io::Error::last_os_error());
+    }
+    Ok(())
+  }
+}
+
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
   let config_path = std::env::args().nth(1).unwrap_or("/etc/pakezmatter.toml".to_string());
   let config = Arc::new(Config::load(&config_path).await?);
   let addr_map = Arc::new(config.get_addr_map());
 
-  let socket = Arc::new(tokio::net::UdpSocket::bind(config.listen_address).await?);
+  let initial_bind_addr = SocketAddr::new("::".parse().unwrap(), config.listen_address.port());
+  let socket = Arc::new(tokio::net::UdpSocket::bind(initial_bind_addr).await?);
 
   #[cfg(target_os = "linux")]
   {
@@ -237,6 +296,8 @@ async fn main() -> Result<(), anyhow::Error> {
       let _ = socket.bind_device(Some(interface));
     }
   }
+
+  bind_afterward(&socket, &config.listen_address)?;
 
   let socket_send = socket.clone();
   let config_send = config.clone();
@@ -306,6 +367,7 @@ async fn main() -> Result<(), anyhow::Error> {
       interval.tick().await;
 
       for (addr, _) in addr_map.iter() {
+        let addr = SocketAddr::V6(socket_addr_to_v6(addr));
         let timestamp = get_unix_time_in_millis();
         let mut buf = Vec::new();
         buf.push(0);

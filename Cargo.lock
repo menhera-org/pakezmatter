@@ -496,6 +496,7 @@ dependencies = [
  "http-body-util",
  "hyper",
  "hyper-util",
+ "libc",
  "parking_lot",
  "serde",
  "serde_json",
