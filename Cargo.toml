@@ -1,0 +1,28 @@
+[package]
+name = "pakezmatter"
+version = "0.1.0"
+edition = "2021"
+
+license = "Apache-2.0 OR MPL-2.0"
+readme = "README.md"
+repository = "https://github.com/menhera-org/pakezmatter"
+description = "Packet loss monitoring system written in Rust."
+homepage = "https://github.com/menhera-org/pakezmatter"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+hyper = { version = "1", features = ["full"] }
+http-body-util = "0.1"
+hyper-util = { version = "0.1", features = ["full"] }
+serde = { version = "^1.0", features = ["derive"] }
+toml = "^0.8"
+base64 = "0.22.0"
+sha2 = "0.10.8"
+hmac = "0.12.1"
+anyhow = "1.0.81"
+parking_lot = "0.12"
+chrono = { version = "0.4.37", features = ["std"] }
+byteorder = "1.5.0"
+serde_json = "1.0.115"
