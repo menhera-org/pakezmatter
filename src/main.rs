@@ -49,6 +49,9 @@ struct Config {
   #[serde(default = "Config::default_listen_address")]
   listen_address: SocketAddr,
 
+  #[allow(unused)]
+  bind_interface: Option<String>,
+
   #[serde(default = "Config::default_api_listen_address")]
   api_listen_address: SocketAddr,
 
@@ -226,6 +229,14 @@ async fn main() -> Result<(), anyhow::Error> {
   let addr_map = Arc::new(config.get_addr_map());
 
   let socket = Arc::new(tokio::net::UdpSocket::bind(config.listen_address).await?);
+
+  #[cfg(target_os = "linux")]
+  {
+    if let Some(interface) = &config.bind_interface {
+      let interface = interface.as_bytes();
+      socket.bind_interface(Some(interface));
+    }
+  }
 
   let socket_send = socket.clone();
   let config_send = config.clone();
