@@ -39,5 +39,6 @@ git clone https://github.com/menhera-org/pakezmatter.git
 cd pakezmatter
 cargo build --release
 sudo cp target/release/pakezmatter /usr/local/bin/
+sudo ln -s /srv/pakezmatter.service /etc/systemd/system/
 sudo systemctl enable --now pakezmatter
 ```
