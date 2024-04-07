@@ -89,7 +89,7 @@ impl Config {
   }
 
   fn get_addr_map(&self) -> HashMap<SocketAddr, String> {
-    self.peers.iter().map(|(k, v)| (v.address, k.to_owned())).collect()
+    self.peers.iter().map(|(k, v)| (SocketAddr::V6(socket_addr_to_v6(&v.address)), k.to_owned())).collect()
   }
 }
 
