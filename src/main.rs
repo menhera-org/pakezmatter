@@ -288,7 +288,8 @@ async fn main() -> Result<(), anyhow::Error> {
   let config_path = std::env::args().nth(1).unwrap_or("/etc/pakezmatter.toml".to_string());
   let config = Arc::new(Config::load(&config_path).await?);
   let addr_map = Arc::new(config.get_addr_map());
-  eprintln!("Address map: {:?}", addr_map);
+  eprintln!("Address map: {:?}", &addr_map);
+  eprintln!("Config: {:?}", &config);
 
   let socket = std::net::UdpSocket::unbounded(Domain::Ipv6)?;
   socket.set_nonblocking(true)?;
