@@ -28,6 +28,9 @@ use hyper_util::rt::TokioIo;
 
 use serde_json::json;
 
+use unbounded_udp::Unbounded;
+use unbounded_udp::Domain;
+
 
 // Create alias for HMAC-SHA256
 type HmacSha256 = Hmac<Sha256>;
@@ -286,8 +289,10 @@ async fn main() -> Result<(), anyhow::Error> {
   let config = Arc::new(Config::load(&config_path).await?);
   let addr_map = Arc::new(config.get_addr_map());
 
-  let initial_bind_addr = SocketAddr::new("::".parse().unwrap(), config.listen_address.port());
-  let socket = Arc::new(tokio::net::UdpSocket::bind(initial_bind_addr).await?);
+  let socket = std::net::UdpSocket::unbounded(Domain::Ipv6)?;
+  socket.set_nonblocking(true)?;
+
+  let socket = Arc::new(tokio::net::UdpSocket::from_std(socket)?);
 
   #[cfg(target_os = "linux")]
   {

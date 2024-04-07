@@ -27,3 +27,4 @@ chrono = { version = "0.4.37", features = ["std"] }
 byteorder = "1.5.0"
 serde_json = "1.0.115"
 libc = "0.2.153"
+unbounded-udp = "1.0.1"
