@@ -230,8 +230,9 @@ impl TryFrom<&[u8]> for Command {
 fn socket_addr_to_v6(addr: &SocketAddr) -> SocketAddrV6 {
   match addr {
     SocketAddr::V4(v4) => {
+      let port = v4.port();
       let v6 = v4.ip().to_ipv6_mapped();
-      SocketAddrV6::new(v6, v4.port(), 0, 0)
+      SocketAddrV6::new(v6, port, 0, 0)
     }
     SocketAddr::V6(v6) => v6.clone(),
   }
