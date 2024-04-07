@@ -291,7 +291,7 @@ async fn main() -> Result<(), anyhow::Error> {
   let config = Arc::new(Config::load(&config_path).await?);
   let addr_map = Arc::new(config.get_addr_map());
   eprintln!("Address map: {:?}", &addr_map);
-  eprintln!("Config: {:?}", &config);
+  // eprintln!("Config: {:?}", &config);
 
   let socket = std::net::UdpSocket::unbounded(Domain::Ipv6)?;
   socket.set_nonblocking(true)?;
