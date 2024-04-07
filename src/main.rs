@@ -232,6 +232,7 @@ fn socket_addr_to_v6(addr: &SocketAddr) -> SocketAddrV6 {
     SocketAddr::V4(v4) => {
       let port = v4.port();
       let v6 = v4.ip().to_ipv6_mapped();
+      eprintln!("Mapped: {:?}, port: {:?}", &v6, port);
       SocketAddrV6::new(v6, port, 0, 0)
     }
     SocketAddr::V6(v6) => v6.clone(),
