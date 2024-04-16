@@ -184,7 +184,7 @@ impl PeerStatistics {
       average_delay: average,
     });
 
-    if self.hour_stats.len() > 60 {
+    if self.hour_stats.len() > 1440 {
       self.hour_stats.remove(0);
     }
 
